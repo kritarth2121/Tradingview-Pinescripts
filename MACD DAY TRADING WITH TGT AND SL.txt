@@ -1,0 +1,53 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Dynamictradingstrategies
+
+//@version=5
+strategy("DAY TRADING WITH MACD AND PT BASED TGT & STOPLOSS", overlay  =true)
+
+session = input.session(defval = "0915-1445")
+TRADEIN = time("15", session)
+SQOFF = time("15", "1445-1500")
+
+
+
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+[diplus, diminus, adx] = ta.dmi(14, 14)
+
+
+LONGSTOP = input.int(defval = 50, step = 5, minval =5, maxval = 1000, title = "LONGSTOP")
+LONGTGT = input.int(defval = 100, step = 5, minval =5, maxval = 1000, title = "LONGTGT")
+SHORTSTOP = input.int(defval = 50, step = 5, minval =5, maxval = 1000, title = "SHORTSTOP")
+SHORTTGT = input.int(defval = 100, step = 5, minval =5, maxval = 1000, title = "SHORTTGT")
+
+ADX_LEVEL = input.int(defval = 25, step = 5, minval =5, maxval = 1000, title = "ADX_LEVEL")
+
+
+///// point based tgt and stoploss 
+
+LT = strategy.position_avg_price + LONGTGT
+LSTOP = strategy.position_avg_price - LONGSTOP
+
+SS = strategy.position_avg_price + SHORTSTOP
+ST = strategy.position_avg_price - SHORTTGT
+
+buy    = ta.crossover(histLine,0) and TRADEIN and adx < ADX_LEVEL
+short = ta.crossunder(histLine,0) and TRADEIN and adx < ADX_LEVEL
+
+sell = SQOFF
+cover =SQOFF
+
+///strategy 
+
+strategy.entry("long", when = buy, direction = strategy.long, comment = "BUY")
+strategy.close("long", when = sell, comment = "sqoff")
+strategy.exit("long", from_entry = "long", stop = LSTOP, limit = LT, comment = "TG/SL-EXIT" )
+
+strategy.entry("short", when = short, direction = strategy.short, comment = "SHORT")
+strategy.close("short", when = cover, comment = "sqoff")
+strategy.exit("short", from_entry = "short", stop = SS, limit = ST, comment = "TG/SL-EXIT" )
+
+plot(strategy.position_size > 0 ? LT : na, style = plot.style_linebr ) 
+plot(strategy.position_size > 0 ? LSTOP : na, style = plot.style_linebr ) 
+
+plot(strategy.position_size < 0 ? SS : na, style = plot.style_linebr ) 
+plot(strategy.position_size < 0 ? ST : na, style = plot.style_linebr ) 

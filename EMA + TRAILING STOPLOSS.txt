@@ -1,0 +1,81 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © pranit123
+
+//@version=5
+strategy("Verge EMA CROSSOVER + TRAILING STOP", overlay = true, initial_capital = 30000,max_labels_count=500,max_lines_count=500,max_boxes_count = 500,calc_on_every_tick = true)
+
+/// USER INPUT 
+
+EMA_L1 = input.int(title = "ema1", defval = 13,minval = 1, maxval = 200, step = 1)
+EMA_L2= input.int(title = "ema2", defval = 34,minval = 1, maxval = 200, step = 1)
+
+trailing_Stop_b = input.float(title = "TSL_B", defval = 0.02, minval = 0.01, step = 0.01, maxval = 100.00)
+trailing_Stop_s = input.float(title = "TSL_S", defval = 0.02, minval = 0.01, step = 0.01, maxval = 100.00)
+
+
+/// trading indicators 
+
+EMA1 = ta.ema(close,EMA_L1)
+EMA2 = ta.ema(close,EMA_L2)
+
+
+/// buy and sell rules 
+
+BUY = ta.crossover(EMA1,EMA2)
+SELL = ta.crossunder(EMA1,EMA2)
+
+BUYEXIT = ta.crossunder(EMA1,EMA2)
+SELLEXIT = ta.crossover(EMA1,EMA2)
+
+
+
+
+
+////// trailing stoploss 
+
+longstopprice = 0.0 
+shortstopprice = 0.0
+
+longstopprice := if (strategy.position_size > 0 )
+    stopvalue = close * (1 - trailing_Stop_b)
+    math.max(stopvalue,longstopprice[1])
+else 
+    0
+    
+
+shortstopprice := if (strategy.position_size < 0 )
+    stopvalue = close * (1 + trailing_Stop_s)
+    math.min(stopvalue, shortstopprice[1])
+else 
+    999999
+    
+    
+/// strategy 
+if time(timeframe.period, "0915-1435:23456")
+    strategy.entry("long", when = BUY, direction = strategy.long, comment = "B")
+    strategy.close("long", when = BUYEXIT, comment = "BE")
+    strategy.exit("long", from_entry = "long", stop = longstopprice, comment = "trailexitB") 
+
+    strategy.entry("short", when = SELL, direction = strategy.short,comment = "S" )
+    strategy.close("short", when = SELLEXIT, comment = "SE")
+    strategy.exit("short", from_entry = "short", stop = shortstopprice, comment = "trailexitS") 
+
+
+plot(strategy.position_size > 0 ? longstopprice : na, style = plot.style_circles, title = "TSLB", color = color.new(color.green,0))
+plot(strategy.position_size < 0 ? shortstopprice : na, style = plot.style_circles, title = "TSLB", color = color.new(color.red,0))
+
+
+plot(EMA1, color = color.new(color.lime,0))
+plot(EMA2,color = color.new(color.purple,0))
+
+
+
+if(hour==15)
+    label.new(bar_index,high,'CLOSED',textcolor = color.white)
+    strategy.close_all()
+
+
+
+
+
+

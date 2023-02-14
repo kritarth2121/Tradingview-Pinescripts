@@ -1,0 +1,38 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © pranit123
+
+//@version=5
+strategy("RSI 14 AND 3 MEAN REVERSION STRATEGY", overlay = true, precision = 4, initial_capital = 300000)
+
+RSI_L3     = input.int(title = "RSIL3", defval = 3, minval = 1, maxval = 22, step = 1 )
+RSI_L14    = input.int(title = "RSIL14", defval = 14, minval = 1, maxval = 22, step = 1 )
+oversold   =   input.int(title = "OS", defval = 35, minval = 1, maxval  = 100, step = 1)
+FILTERl    =  input.int(title = "FILTERl", defval = 40, minval = 1, maxval = 100, step = 1)
+iqty       = input.float(title = "quantity", defval = 1, minval = 1, maxval = 100, step = 0.5)
+Filterema  = input.int(title = "RSIL3", defval = 150, minval = 1, maxval = 200, step = 1 )
+
+
+/// trading indicators 
+RSI3  = ta.rsi(close,RSI_L3)
+RSI14 = ta.rsi(close,RSI_L14)
+ATR   = ta.atr(14) 
+EMA   = ta.ema(close,9)
+FEMA  = ta.ema(close,Filterema)
+
+//////////////////
+
+BUY = ta.crossover(RSI3,oversold) and RSI14 > FILTERl  and close > FEMA 
+
+///////////////
+
+
+buyexit =  ta.crossunder(close,EMA) or close < ta.ema(close,89)
+
+///////////////////////
+
+strategy.entry("long", strategy.long, when = BUY, qty = iqty, comment = "B")
+strategy.close("long", when = buyexit ,qty = iqty, comment = "S")
+
+
+
+

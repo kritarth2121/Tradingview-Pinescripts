@@ -1,0 +1,117 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Dynamictradingstrategies
+
+//@version=5
+strategy("RSI + TRAILING_STOPLOSS", overlay = true)
+
+// INPUT CONTROLS 
+
+// input controls 
+
+
+RSI_L = input.int(title = "RSIL", defval = 14, minval = 1, maxval = 22, step = 1)
+
+
+trailing_Stoploss_pb = input.float(title = "trailing_Stoploss_pb", defval = 0.02, minval = 0.01, maxval = 100.00, step = 0.01)
+trailing_Stoploss_ps  = input.float(title = "trailing_Stoploss_ps", defval = 0.02, minval = 0.01, maxval = 100.00, step = 0.01)
+
+
+/// trading indicators 
+
+RSI = ta.rsi(close,RSI_L)
+
+/// BUY AND SELL RULES 
+
+
+BUY = ta.crossover(RSI,60)
+SELL = ta.crossunder(RSI,40)
+
+
+/////////////////// TRAILING STOPLOSSS 
+
+
+LONGSTOPPRICE = 0.0
+SHORTSTOPPRICE = 0.0
+
+
+LONGSTOPPRICE :=  if (strategy.position_size > 0)
+    stopvalue = close * (1 - trailing_Stoploss_pb )
+    math.max(stopvalue, LONGSTOPPRICE[1]) 
+    
+else
+    0 
+    
+    
+SHORTSTOPPRICE := if (strategy.position_size < 0)
+    stopvalue = close * (1 + trailing_Stoploss_ps )
+    math.min(stopvalue, SHORTSTOPPRICE[1])
+
+else 
+    999999
+    
+    
+    
+strategy.entry("long", when = BUY, direction = strategy.long, comment = "B")
+strategy.exit("long", from_entry = "long", stop = LONGSTOPPRICE, comment = "TRAILEXIT_B" )
+    
+    
+    
+strategy.entry("short", when = SELL, direction = strategy.short, comment = "S")
+strategy.exit("short", from_entry = "short", stop = SHORTSTOPPRICE, comment = "TRAILEXIT_S" )
+
+plot(strategy.position_size > 0 ? LONGSTOPPRICE : na, style = plot.style_circles, title = "TSLB", color = color.new(color.green,0))
+plot(strategy.position_size < 0 ? SHORTSTOPPRICE : na, style = plot.style_circles, title = "TSLB", color = color.new(color.red,0))
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

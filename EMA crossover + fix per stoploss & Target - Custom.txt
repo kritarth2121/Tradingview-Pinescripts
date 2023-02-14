@@ -1,0 +1,68 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Dynamictradingstrategies
+
+//@version=5
+strategy("EMA CROSSOVER WITH PERCENTAGE BASED STOP & TAREGT - v1.0", overlay = true)
+
+/// INPUT CONTROLS 
+
+EMA_L = input.int(title =  "EMA_L", defval = 13, minval = 1,maxval = 100, step = 1)
+EMA_L2 = input.int(title =  "EMA_L2", defval = 34, minval = 1,maxval = 100, step = 1)
+
+long_stop = input.float(title =  "long_stop", defval = 0.01, minval = 0.001,maxval = 100.00, step = 0.001)
+short_stop = input.float(title =  "short_stop", defval = 0.01, minval = 0.001,maxval = 100.00, step = 0.001)
+
+long_target = input.float(title =  "long_target", defval = 0.01, minval = 0.001,maxval = 100.00, step = 0.001)
+short_target = input.float(title =  "short_target", defval = 0.01, minval = 0.001,maxval = 100.00, step = 0.001)
+
+
+/// trading indicators 
+
+EMA1 = ta.ema(close,EMA_L)
+EMA2 = ta.ema(close,EMA_L2)
+
+long_stop_buy   = strategy.position_avg_price * ( 1  - long_stop )
+short_stop_sell = strategy.position_avg_price * ( 1  + short_stop )
+
+long_target_buy   = strategy.position_avg_price * ( 1  + long_target )
+short_target_sell = strategy.position_avg_price * ( 1  - short_target )
+
+
+BUY = ta.crossover(EMA1,EMA2)
+SELL = ta.crossunder(EMA1,EMA2)
+
+BUYEXIT = ta.crossunder(EMA1,EMA2)
+SELLEXIT = ta.crossover(EMA1,EMA2)
+
+
+// STRATEGY LONG
+if strategy.position_size <= 0 
+    strategy.entry("long", strategy.long, when = BUY, comment = "BUY")
+    
+if strategy.position_size > 0
+    strategy.close("long", when = BUYEXIT, comment = "BE")
+    strategy.exit("long", from_entry = 'long', stop = long_stop_buy,limit = long_target_buy, comment = "EXIT")
+
+// STRATEGY SHORT
+if strategy.position_size >= 0 
+    strategy.entry("short", strategy.short, when = SELL, comment = "SELL")
+    
+if strategy.position_size < 0 
+    strategy.close("short", when = SELLEXIT, comment = "SE")
+    strategy.exit("short", from_entry = 'short', stop = short_stop_sell, limit = short_target_sell, comment = "EXIT" )
+
+
+plot(EMA1, color = color.new(color.red,0))
+plot(EMA2, color = color.new(color.green,0))
+
+plot(strategy.position_size > 0 ? long_stop_buy : na, style = plot.style_linebr)
+plot(strategy.position_size > 0 ? long_target_buy : na, style = plot.style_linebr,color = color.new(color.green,0))
+
+plot(strategy.position_size < 0 ? short_stop_sell : na,style = plot.style_linebr)
+plot(strategy.position_size < 0 ? short_target_sell : na,style = plot.style_linebr,color = color.new(color.green,0))
+
+
+
+
+
+

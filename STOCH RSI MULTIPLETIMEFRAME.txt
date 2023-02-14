@@ -1,0 +1,102 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Dynamictradingstrategies
+
+//@version=5
+strategy("STOCHASTIC RSI MTF", overlay = true, initial_capital = 300000)
+
+Stoch_l = input.int(title = "Stoch_l", defval = 14, minval = 1,maxval = 30, step = 1 )
+RSI_L = input.int(title = "RSI_L", defval = 14, minval = 1,maxval = 30, step = 1 )
+
+EMA_L1 = input.int(title = "EMA_L1", defval = 13, minval = 1,maxval = 100, step = 1 )
+EMA_L2 = input.int(title = "EMA_L2", defval = 34, minval = 1,maxval = 100, step = 1 )
+
+EXIT_EMA = input.int(title = "EXIT_EMA", defval = 13, minval = 1,maxval = 100, step = 1 )
+
+
+
+////// TRADING INDICATOR 
+
+RSI = ta.rsi(close,RSI_L)
+
+Stoch_rsi = ta.stoch(RSI,RSI,RSI,Stoch_l)
+smooth_stoch = ta.sma(Stoch_rsi,3)
+Signal_line = ta.sma(smooth_stoch,3)
+
+EXITEMA = ta.ema(close,EXIT_EMA)
+
+/// MULTIPLE TIMEFRAME STOCHASTIC RSI INDICATOR
+
+STOCHRSI_2H    = request.security(syminfo.tickerid, "240", smooth_stoch[barstate.isrealtime ? 1 : 0])
+Signal_line_2H = request.security(syminfo.tickerid, "240", Signal_line[barstate.isrealtime ? 1 : 0])
+
+BUY = STOCHRSI_2H > Signal_line_2H and ta.crossover(smooth_stoch,30) and close > EXITEMA
+SELL = STOCHRSI_2H < Signal_line_2H and ta.crossunder(smooth_stoch,70) and close < EXITEMA
+
+BUYEXIT =  ta.crossunder(close,EXITEMA)
+SELLEXIT = ta.crossover(close,EXITEMA)
+
+
+////// END ////////
+
+// STRATEGY 
+
+if strategy.position_size <= 0
+    strategy.entry("long", strategy.long, when = BUY, comment = "BUY")
+    
+if strategy.position_size > 0
+    strategy.close("long", when = BUYEXIT, comment = "BUYEXIT")
+    
+
+
+if strategy.position_size >= 0
+    strategy.entry("short", strategy.short, when = SELL, comment = "SELL")
+    
+if strategy.position_size < 0
+    strategy.close("short", when = SELLEXIT, comment = "SELLEXIT")
+    
+
+
+
+
+
+plotshape(BUY,style = shape.triangleup, text = "BUY", textcolor = color.new(color.green,0), location = location.belowbar)
+plotshape(SELL, style = shape.triangledown, text = "SELL", textcolor = color.new(color.red,0),location = location.abovebar)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//EMA1 = ta.ema(close,EMA_L1)
+//EMA2 = ta.ema(close,EMA_L2)
+
+
+//BUY = EMA1 > EMA2 and ta.crossover(smooth_stoch,Signal_line) and smooth_stoch > smooth_stoch[1] and ta.crossover(smooth_stoch,20)
+//SELL = EMA1 < EMA2 and ta.crossunder(smooth_stoch,Signal_line) and smooth_stoch < smooth_stoch[1] and ta.crossunder(smooth_stoch,80)
+
+//plotshape(BUY,style = shape.triangleup, text = "BUY", textcolor = color.new(color.green,0), location = location.belowbar)
+//plotshape(SELL, style = shape.triangledown, text = "SELL", textcolor = color.new(color.red,0),location = location.abovebar)
+
+//plot(EMA1)
+//plot(EMA2, color = color.new(color.green,0))
+
+//plot(smooth_stoch)
+//plot(Signal_line, color = color.new(color.red,0))
+//a = hline(80)
+//b = hline(20)
+
+//fill(a,b, color = color.new(color.green,70))
+
+
+
+
+
+

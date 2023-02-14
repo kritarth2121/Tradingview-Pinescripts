@@ -1,0 +1,47 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Dynamictradingstrategies
+
+//@version=5
+strategy("SWING TRADING STRATEGY WITH 1:2 RR", overlay = true)
+
+
+RSI_l = input.int(title = "RSI_L", defval = 14)
+
+LONGSTOP = input.int(title = "LONGSTOP", defval = 75)
+LONGTGT = input.int(title = "LONGTGT", defval = 150)
+
+SHORTSTOP = input.int(title = "SHORTSTOP", defval = 75)
+SHORTTARGET = input.int(title = "SHORTTARGET", defval = 150)
+
+//// TRADING INDICATORS 
+
+RSI = ta.rsi(close,RSI_l)
+
+LS = strategy.position_avg_price - LONGSTOP
+LT = strategy.position_avg_price + LONGTGT
+
+SS = strategy.position_avg_price + SHORTSTOP
+ST = strategy.position_avg_price - SHORTTARGET
+
+/// buy and sell rules 
+
+[diplus, diminus, adx] = ta.dmi(14, 14)
+
+
+buy = ta.crossover(RSI,60) and adx < 20
+short = ta.crossunder(RSI,40)  and adx < 20
+
+
+/// strategy 
+
+strategy.entry("long", direction = strategy.long, when = buy, comment = "BUY")
+strategy.exit("long", from_entry = "long", stop = LS, limit =LT, comment = "TG/SL_EXIT"  )
+
+strategy.entry("short", direction = strategy.short, when = short, comment = "SHORT")
+strategy.exit("short", from_entry = "short", stop = SS, limit = ST, comment = "TG/SL_EXIT")
+
+plot(strategy.position_size > 0 ? LS : na, style = plot.style_linebr, color = color.red )
+plot(strategy.position_size > 0 ? LT : na, style = plot.style_linebr, color = color.green )
+
+plot(strategy.position_size < 0 ? SS : na, style = plot.style_linebr, color = color.red )
+plot(strategy.position_size < 0 ? ST : na, style = plot.style_linebr, color = color.green )
